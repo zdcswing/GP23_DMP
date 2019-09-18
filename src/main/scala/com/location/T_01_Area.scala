@@ -7,10 +7,10 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
   *
   * @author: ZDC
   * @date: 2019/09/17 17:52
-  * @description:
+  * @description: 地域分布分析指标
   * @since 1.0
   */
-object T_01 {
+object T_01_Area {
 
   def main(args: Array[String]): Unit = {
     if (args.length != 1) {

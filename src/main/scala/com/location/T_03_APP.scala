@@ -1,5 +1,6 @@
 package com.location
 
+import com.location.T_02_Run.getReqList
 import com.utils.RptUtils
 import org.apache.commons.lang.StringUtils
 import org.apache.spark.broadcast.Broadcast
@@ -12,12 +13,11 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
   * @description: 媒体分析指标
   * @since 1.0
   */
-class APP {
+class T_03_APP {
 
 }
 
-
-object APP {
+object T_03_APP {
   def main(args: Array[String]): Unit = {
     if (args.length != 2) {
       println("输入目录不正确")
@@ -42,34 +42,18 @@ object APP {
 
     val df: DataFrame = sparkSession.read.parquet(inputPath)
 
-    df.rdd.map(row => {
+    val res = df.rdd.map(row => {
       var appName = row.getAs[String]("appname")
       if(StringUtils.isBlank(appName)){
         appName = doc2FilterMapBd.value.getOrElse(row.getAs[String]("appid"),"unknow")
       }
-
-      val requestmode: Int = row.getAs[Int]("requestmode")
-      val processnode: Int = row.getAs[Int]("processnode")
-      val iseffective: Int = row.getAs[Int]("iseffective")
-      val isbilling: Int = row.getAs[Int]("isbilling")
-      val isbid: Int = row.getAs[Int]("isbid")
-      val iswin: Int = row.getAs[Int]("iswin")
-      val adorderid: Int = row.getAs[Int]("adorderid")
-      val winprice: Double = row.getAs[Double]("winprice")
-      val adpayment: Double = row.getAs[Double]("adpayment")
-
-      // 处理请求数
-      val rptList: List[Double] = RptUtils.reqPt(requestmode, processnode)
-      // 处理展示消息
-      val clickList: List[Double] = RptUtils.clickPt(requestmode, iseffective)
-      // 处理广告
-      val adList: List[Double] = RptUtils.adPt(iseffective, isbilling, isbid, iswin, adorderid, winprice, adpayment)
-      // 所有指标
-      val reqAllList: List[Double] = rptList ++ clickList ++ adList
+      val reqAllList = getReqList(row)
       (appName, reqAllList)
     }).reduceByKey((list1, list2) => {
       list1.zip(list2).map(t => t._1 + t._2)
     }).map(t => t._1 + "," + t._2.mkString(","))
+
+    res.foreach(println(_))
 //      .saveAsTextFile("")
 
   }
