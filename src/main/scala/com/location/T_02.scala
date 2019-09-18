@@ -35,10 +35,10 @@ object T_02 {
     //     netDisDSL(sparkSession, srcDataFrame)
 
     // 设备
-    //    deviceDisDSL(sparkSession, srcDataFrame)
+        deviceDisDSL(sparkSession, srcDataFrame)
 
     // 操作系统
-    //    clienteDisDSL(sparkSession, srcDataFrame)
+        clienteDisDSL(sparkSession, srcDataFrame)
 
 
     sparkSession.stop()
@@ -48,7 +48,15 @@ object T_02 {
                     srcDataFrame: DataFrame): Unit = {
     val res = srcDataFrame.rdd.map(row => {
       val reqAllList = getReqList(row)
-      (row.getAs[String]("client"), reqAllList)
+      val clientNum: Int = row.getAs[Int]("client")
+      val clientOS: String = clientNum match {
+        case 1 => "android"
+        case 2 => "ios"
+        case 3 => "wp"
+        case _ => "其他"
+      }
+
+      (clientOS, reqAllList)
     }).reduceByKey((list1, list2) => {
       list1.zip(list2).map(t => t._1 + t._2)
     }).map(t => t._1 + "," + t._2.mkString(","))
@@ -59,10 +67,18 @@ object T_02 {
                    srcDataFrame: DataFrame): Unit = {
     val res = srcDataFrame.rdd.map(row => {
       val reqAllList = getReqList(row)
-      (row.getAs[String]("devicetype"), reqAllList)
+      val deviceTypeNum: Int = row.getAs[Int]("devicetype")
+
+      val deviceType: String = deviceTypeNum match {
+        case 1 => "手机"
+        case 2 => "平板"
+        case _ => "其他"
+      }
+
+      (deviceType, reqAllList)
     }).reduceByKey((list1, list2) => {
       list1.zip(list2).map(t => t._1 + t._2)
-    }).map(t => t._1 + "," + t._2.mkString(","))
+    }).map(t => t._1 +"," + t._2.mkString(","))
     res.foreach(println(_))
   }
 
