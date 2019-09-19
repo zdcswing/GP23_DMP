@@ -1,7 +1,10 @@
 package com.analysis.tagging
 
-import com.utils.Tag
+import ch.hsr.geohash.GeoHash
+import com.utils.{AmapUtil, JedisConnectionPool, String2Type, Tag}
+import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.Row
+
 
 /**
   *
@@ -16,13 +19,72 @@ object BusinessTag extends Tag {
 
     var row = args(0).asInstanceOf[Row]
 
-    if (row.getAs[String]("long").toDouble >= 73
-      && row.getAs[String]("long").toDouble <= 136
-      && row.getAs[String]("lat").toDouble >= 3
-      && row.getAs[String]("lat").toDouble <= 53){
+    if (String2Type.toDouble(row.getAs[String]("long")) >= 73
+      && String2Type.toDouble(row.getAs[String]("long")) <= 136
+      && String2Type.toDouble(row.getAs[String]("lat")) >= 3
+      && String2Type.toDouble(row.getAs[String]("lat")) <= 53) {
+
       val long = row.getAs[String]("long").toDouble
       val lat = row.getAs[String]("lat").toDouble
+
+      // 获取到商圈名称
+      val business: String = getBusiness(long, lat)
+
+      if(StringUtils.isNoneBlank(business)){
+        val str = business.split(",")
+        str.foreach(str=>{
+          list:+=(str,1)
+        })
+      }
+
     }
-      list
+    list
   }
+
+  /**
+    *
+    * @param long
+    * @param lat
+    * @return
+    */
+  def getBusiness(long:Double,lat:Double):String={
+    // GeoHash码
+    val geohash = GeoHash.geoHashStringWithCharacterPrecision(lat,long,6)
+    // 数据库查询当前商圈信息
+    var business = redis_queryBusiness(geohash)
+    // 去高德请求
+    if(business == null){
+      business = AmapUtil.getBusinessFromAmap(long,lat)
+      // 将高德获取的商圈存储数据库
+      if(business!=null && business.length > 0){
+        redis_insertBusiness(geohash,business)
+      }
+    }
+    business
+  }
+
+
+  /**
+    * 数据库获取商圈信息
+    * @param geohash
+    * @return
+    */
+  def redis_queryBusiness(geohash:String):String={
+    val jedis = JedisConnectionPool.getConnection()
+    val business = jedis.get(geohash)
+    jedis.close()
+    business
+  }
+
+  /**
+    * 将商圈保存数据库
+    * @param geohash
+    * @param business
+    */
+  def redis_insertBusiness(geohash:String,business:String): Unit ={
+    val jedis = JedisConnectionPool.getConnection()
+    jedis.set(geohash,business)
+    jedis.close()
+  }
+
 }

@@ -33,6 +33,7 @@ object TagUtils {
       case it if StringUtils.isNotBlank(it.getAs[String]("idfasha1")) => "ID" + it.getAs[String]("idfasha1")
       case it if StringUtils.isNotBlank(it.getAs[String]("openudidsha1")) => "OD" + it.getAs[String]("openudidsha1")
       case it if StringUtils.isNotBlank(it.getAs[String]("androididsha1")) => "AD" + it.getAs[String]("androididsha1")
+      case _ => "其他"
 
 
     }

@@ -1,6 +1,7 @@
 package com.analysis.tagging
 
 import com.utils.TagUtils
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
@@ -29,17 +30,45 @@ object TagsContext {
 
     val srcDateFarme: DataFrame = sparkSession.read.parquet(inputPath)
 
-    srcDateFarme.createOrReplaceTempView("log")
+//    srcDateFarme.createOrReplaceTempView("log")
 
-//    srcDateFarme.map{
-//      case item =>
-//        // 获取用户唯一ID
-//        val userId = TagUtils.getOneUserId(item)
-//    }
+    val userId2BusinessTagRDD: RDD[(String, List[(String, Int)])] = srcDateFarme.map {
+      case item =>
+        // 获取用户唯一ID
+        val userId = TagUtils.getOneUserId(item)
 
-    println("a===========")
+
+
+        val listBusinessTag: List[(String, Int)] = BusinessTag.makeTags(item)
+        (userId, listBusinessTag)
+    }.rdd
+
+    val userId2FilterBTagRDD: RDD[(String, List[(String, Int)])] = userId2BusinessTagRDD.filter {
+      case (userId, listBusinessTag) =>
+        listBusinessTag.size > 0
+    }
+
+    val userTagRDD: RDD[UserTag] = userId2FilterBTagRDD.map {
+      case (userId, listBTag) =>
+        var aggInfo: String = ""
+        for (item <- listBTag) {
+          val name = item._1
+          val count = item._2
+          aggInfo += name + "=" + count + "|"
+        }
+        if(aggInfo.endsWith("\\|")){
+          aggInfo = aggInfo.substring(0, aggInfo.length - 1)
+        }
+        UserTag(userId, aggInfo)
+    }
+
+    userTagRDD.foreach(println(_))
+
+    println("===========ok===========")
 
     sparkSession.stop()
 
   }
 }
+
+case class UserTag(userId:String, BTag:String )

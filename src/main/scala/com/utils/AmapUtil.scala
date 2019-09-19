@@ -10,7 +10,7 @@ import com.alibaba.fastjson.{JSON, JSONArray, JSONObject}
   * @since 1.0
   */
 object AmapUtil {
-  def getBusinessFromAMap(long: Double, lat: Double): String = {
+  def getBusinessFromAmap(long: Double, lat: Double): String = {
     val location = long + "," + lat
     val url = "https://restapi.amap.com/v3/geocode/regeo?output=json&location=" + location + "&key=6aff8663d91c8383a09f1a1d860529b2&radius=1000&extensions=all"
 
@@ -23,9 +23,12 @@ object AmapUtil {
 
     if (starus == 0) return ""
 
+    val jSONObject6: JSONObject = jSONObject1.getJSONObject("regeocode")
+    if (jSONObject6 == null) return ""
+
     // 如果不为空 businessAreas
-    val jSONObject2: JSONObject = jSONObject1.getJSONObject("addressComponent")
-    if (jSONObject2 != null) return ""
+    val jSONObject2: JSONObject = jSONObject6.getJSONObject("addressComponent")
+    if (jSONObject2 == null) return ""
 
     val jSONArray: JSONArray = jSONObject2.getJSONArray("businessAreas")
 
