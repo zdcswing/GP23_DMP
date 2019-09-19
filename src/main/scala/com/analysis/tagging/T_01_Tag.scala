@@ -2,6 +2,7 @@ package com.analysis.tagging
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+
 /**
   *
   * @author: ZDC
@@ -26,9 +27,11 @@ object T_01_Tag {
 
     val srcDateFarme: DataFrame = sparkSession.read.parquet(inputPath)
 
-    srcDateFarme.foreach(println(_))
+    srcDateFarme.createOrReplaceTempView("log")
+
+    val res: DataFrame = sparkSession.sql("select * from log")
+
+    res.foreach(println(_))
 
   }
-
-
 }
