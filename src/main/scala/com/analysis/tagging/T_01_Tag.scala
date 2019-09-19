@@ -1,6 +1,6 @@
 package com.analysis.tagging
 
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
   *
@@ -9,14 +9,14 @@ import org.apache.spark.sql.SparkSession
   * @description: 数据标签化
   * @since 1.0
   */
-class T_01_Tag {
+object T_01_Tag {
   def main(args: Array[String]): Unit = {
     if (args.length != 1) {
       println("输入目录不正确")
       sys.exit()
     }
 
-    val Array(inputPath, docs) = args
+    val Array(inputPath) = args
 
     val sparkSession: SparkSession = SparkSession.builder()
       .appName("app")
@@ -24,6 +24,9 @@ class T_01_Tag {
       .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .getOrCreate()
 
+    val srcDateFarme: DataFrame = sparkSession.read.parquet(inputPath)
+
+    srcDateFarme.foreach(println(_))
 
   }
 
