@@ -1,6 +1,6 @@
-package com.location
+package com.analysis.location
 
-import com.location.T_02_Run.getReqList
+import com.analysis.location.T_02_Run.getReqList
 import com.utils.RptUtils
 import org.apache.commons.lang.StringUtils
 import org.apache.spark.broadcast.Broadcast

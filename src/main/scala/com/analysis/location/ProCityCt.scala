@@ -1,4 +1,4 @@
-package com.location
+package com.analysis.location
 
 import com.commons.{ConfigurationManager, Constants}
 import com.typesafe.config.ConfigFactory

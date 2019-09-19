@@ -1,4 +1,4 @@
-package com.location
+package com.analysis.location
 
 import com.utils.RptUtils
 import org.apache.spark.sql.{DataFrame, SparkSession}
