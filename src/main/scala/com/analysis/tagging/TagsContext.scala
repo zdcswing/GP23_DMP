@@ -2,7 +2,7 @@ package com.analysis.tagging
 
 import com.utils.TagUtils
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 /**
   *
