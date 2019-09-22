@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="TagsContext" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.analysis.tagging.TagsContext" />
+    <module name="GP23_DMP" />
+    <option name="PROGRAM_PARAMETERS" value="D:\out\log E:\课程\spark项目\Spark用户画像分析\app_dict.txt E:\课程\spark项目\Spark用户画像分析\stopwords.txt" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="com.analysis.tagging.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

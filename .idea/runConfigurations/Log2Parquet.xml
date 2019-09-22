@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Log2Parquet" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.etl.Log2Parquet" />
+    <module name="GP23_DMP" />
+    <option name="PROGRAM_PARAMETERS" value="in/ out" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="com.etl.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

@@ -34,6 +34,11 @@ object TagsAd extends Tag {
       list :+= ("LN" + adName, 1)
     }
 
+    // 渠道标签
+
+
+
+
     list
   }
 }
