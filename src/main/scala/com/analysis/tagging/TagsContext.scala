@@ -4,7 +4,11 @@ import com.typesafe.config.{Config, ConfigFactory}
 import com.utils.TagUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.{HColumnDescriptor, HTableDescriptor, TableName}
-import org.apache.hadoop.hbase.client.{Admin, Connection, ConnectionFactory}
+import org.apache.hadoop.hbase.client.{Admin, Connection, ConnectionFactory, Put}
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable
+import org.apache.hadoop.hbase.mapred.TableOutputFormat
+import org.apache.hadoop.hbase.util.Bytes
+import org.apache.hadoop.mapred.JobConf
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
@@ -23,7 +27,7 @@ object TagsContext {
       sys.exit()
     }
 
-    val Array(inputPath, docs, stopwords) = args
+    val Array(inputPath, docs, stopwords, day) = args
 
     val sparkSession: SparkSession = SparkSession.builder()
       .appName("TagsContext")
@@ -33,29 +37,34 @@ object TagsContext {
 
     import sparkSession.implicits._
 
-        val load: Config = ConfigFactory.load()
+    val load: Config = ConfigFactory.load()
 
-        val hbaseTableName: String = load.getString("HBASE.tableName")
+    val hbaseTableName: String = load.getString("HBASE.tableName")
 
-        val configuration: Configuration = sparkSession.sparkContext.hadoopConfiguration
+    val configuration: Configuration = sparkSession.sparkContext.hadoopConfiguration
 
-        configuration.set("", load.getString("HBASE.Host"))
+    configuration.set("", load.getString("HBASE.Host"))
 
-        val hbConn: Connection = ConnectionFactory.createConnection(configuration)
+    val hbConn: Connection = ConnectionFactory.createConnection(configuration)
 
-        val hAdmin: Admin = hbConn.getAdmin
+    val hAdmin: Admin = hbConn.getAdmin
 
-        if (!hAdmin.tableExists(TableName.valueOf(hbaseTableName))) {
-          println("当前表有效")
-          val tableDescriptor = new HTableDescriptor(TableName.valueOf(hbaseTableName))
-          val hColumnDescriptor = new HColumnDescriptor("tags")
+    if (!hAdmin.tableExists(TableName.valueOf(hbaseTableName))) {
+      println("当前表有效")
+      val tableDescriptor = new HTableDescriptor(TableName.valueOf(hbaseTableName))
+      val hColumnDescriptor = new HColumnDescriptor("tags")
 
-          tableDescriptor.addFamily(hColumnDescriptor)
-          hAdmin.createTable(tableDescriptor)
-          hAdmin.close()
-          hbConn.close()
+      tableDescriptor.addFamily(hColumnDescriptor)
+      hAdmin.createTable(tableDescriptor)
+      hAdmin.close()
+      hbConn.close()
+    }
 
-        }
+    val conf = new JobConf(configuration)
+    // 指定输出类型
+    conf.setOutputFormat(classOf[TableOutputFormat])
+    // 指定输出哪张表
+    conf.set(TableOutputFormat.OUTPUT_TABLE,hbaseTableName)
 
 
     val srcDateFarme: DataFrame = sparkSession.read.parquet(inputPath)
@@ -71,7 +80,8 @@ object TagsContext {
 
     //    srcDateFarme.createOrReplaceTempView("log")
 
-    val userId2BusinessTagRDD: RDD[(String, List[(String, Int)])] = srcDateFarme.map {
+    //    val userId2BusinessTagRDD: RDD[(String, List[(String, Int)])] =
+    srcDateFarme.map {
       case item =>
         // 获取用户唯一ID
         val userId = TagUtils.getOneUserId(item)
@@ -96,9 +106,15 @@ object TagsContext {
           .mapValues(_.foldLeft(0)(_ + _._2))
           .toList
       }
-    }
+    }.map {
+      case (userId, userTags) =>
+        // 设置rowKey和列, 列名
+        val put = new Put(Bytes.toBytes(userId))
+        put.addImmutable(Bytes.toBytes("tags"), Bytes.toBytes(day), Bytes.toBytes(userTags.mkString(",")))
+        (new ImmutableBytesWritable(), put)
+    }.saveAsHadoopDataset(conf)
 
-    userId2BusinessTagRDD.foreach(println(_))
+//    userId2BusinessTagRDD.foreach(println(_))
 
     sparkSession.stop()
 
